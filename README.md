@@ -40,55 +40,74 @@
 #專案完整原始碼
 
 ```
-import com.sun.net.httpserver. HttpServer;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver. HttpExchange;
-import java.io .*;
-import java.net. InetSocketAddress;
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpExchange;
+import java.io.*;
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 
 public class SecureApp {
-public static void main(String[] args) throws Exception {
-HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
 
-server. createContext("/", (exchange) > {
-String html = "<html><body style='font-family:sans-serif; padding:20px;'>" +
-"<h2>資管系期末專案:安全記帳系統</h2>"+
-"<p>請輸入一筆新的支出備註 :< /p>"+
-"<form action='/save' method='POST'>"
-"<input type='text' name='note' style='width: 300px;'> " +
-"<input type='submit' value='7 '>" +
-"</form>" +
-"</body></html>";
-sendResponse(exchange, html);
+    public static void main(String[] args) throws Exception {
 
-server. createContext("/save", (exchange) > {
-if ("POST".equals(exchange. getRequestMethod())) {
-InputStreamReader isr = new InputStreamReader(exchange. getRequestBody(), StandardCharsets.UTF_8);
-BufferedReader br = new BufferedReader(isr);
-String formData = br. readLine( ); // t : note=
-String userInput = formData.split("=").length > 1 ? formData.split("=")[1] : "";
-userInput = java.net. URLDecoder. decode(userInput, StandardCharsets.UTF_8);
-};
+        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
 
-String safeInput . userInput.replace("<", "5lt;").replace(">", "ogt;");
-String html = "<html><body>" +
-“ch3>儲存成功 !< /h3>”+
-“<p>你輸入的內容(已通過安全過濾〕 :< b>'*safeInput+"</b></p>'+
-"ca href=/>& fi l </a>" +
-"</body></html>";
-sendResponse(exchange, html);
+        server.createContext("/", (exchange) -> {
+            String html =
+                    "<html><body style='font-family:sans-serif; padding:20px;'>" +
+                    "<h2>資管系期末專案:安全記帳系統</h2>" +
+                    "<p>請輸入一筆新的支出備註 :</p>" +
+                    "<form action='/save' method='POST'>" +
+                    "<input type='text' name='note' style='width: 300px;'>" +
+                    "<input type='submit' value='7'>" +
+                    "</form>" +
+                    "</body></html>";
 
-System.out.println("Java 安全伺服器已做動,監聽埠號:8080 ….. “);
-server.start( );
+            sendResponse(exchange, html);
+        });
 
-private static void sendResponse(HttpExchange exchange, String response) throws IOException {
-byte[] bytes = response. getDytes(StandardCharsets. UTF_B);
-exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
-exchange.sendResponseHeaders(200, bytes. length);
-OutputStream os = exchange. getResponseBody( );
-os.write(bytes);
-os.close();
+        server.createContext("/save", (exchange) -> {
+            String userInput = "";
+
+            if ("POST".equals(exchange.getRequestMethod())) {
+                InputStreamReader isr =
+                        new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8);
+                BufferedReader br = new BufferedReader(isr);
+                String formData = br.readLine(); // note=xxx
+                if (formData != null && formData.split("=").length > 1) {
+                    userInput = java.net.URLDecoder.decode(
+                            formData.split("=")[1],
+                            StandardCharsets.UTF_8
+                    );
+                }
+            }
+
+            String safeInput = userInput.replace("<", "&lt;").replace(">", "&gt;");
+
+            String html =
+                    "<html><body>" +
+                    "<h3>儲存成功 !</h3>" +
+                    "<p>你輸入的內容(已通過安全過濾): <b>" + safeInput + "</b></p>" +
+                    "<a href='/'>返回</a>" +
+                    "</body></html>";
+
+            sendResponse(exchange, html);
+        });
+
+        System.out.println("Java 安全伺服器已啟動, 監聽埠號:8080");
+        server.start();
+    }
+
+    private static void sendResponse(HttpExchange exchange, String response) throws IOException {
+        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+        exchange.sendResponseHeaders(200, bytes.length);
+        OutputStream os = exchange.getResponseBody();
+        os.write(bytes);
+        os.close();
+    }
+}
+
 ```
 ---------------------------------------------------------------------------------------------------------------
 
