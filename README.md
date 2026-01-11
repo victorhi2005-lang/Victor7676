@@ -38,7 +38,7 @@
 ---------------------------------------------------------------------------------------------------------------
 
 ```
--$ cd ~/SecurityProject
+cd ~/SecurityProject
 nano SecureApp. java
 wget https://downloads.mariadb.com/Connectors/java/connector-java-3.1.2/mariadb-java-client-3.1.2.jar
 sudo docker exec securityproject-app-1 javac SecureApp. java
