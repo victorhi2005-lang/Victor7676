@@ -40,6 +40,21 @@
 #專案完整原始碼
 
 ```
+-$ cd ~/SecurityProject
+nano SecureApp. java
+wget https://downloads.mariadb.com/Connectors/java/connector-java-3.1.2/mariadb-java-client-3.1.2.jar
+sudo docker exec securityproject-app-1 javac SecureApp. java
+sudo docker exec -d securityproject-app-1 java -cp .: mariadb-java-client-3.1.2. jar SecureApp
+sudo docker exec securityproject-app-1 pkill java
+sudo docker exec securityproject-app-1 javac SecureApp. java
+sudo docker exec -d securityproject-app-1 java -cp .: mariadb-java-client-3.1.2.jar SecureApp
+sudo docker logs securityproject-app-1
+sudo docker exec securityproject-app-1 pkill -9 java
+sudo docker exec securityproject-app-1 java -cp .: mariadb-java-client-3.1.2. jar SecureApp
+```
+---------------------------------------------------------------------------------------------------------------
+
+```
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.*;
