@@ -60,56 +60,55 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.sql.*;
 
 public class SecureApp {
+    static final String DB_URL = "jdbc:mariadb://db:3306/secure_db";
+    static final String USER = "root";
+    static final String PASS = "root";
 
     public static void main(String[] args) throws Exception {
-
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
-
+        
         server.createContext("/", (exchange) -> {
-            String html =
-                    "<html><body style='font-family:sans-serif; padding:20px;'>" +
-                    "<h2>資管系期末專案:安全記帳系統</h2>" +
-                    "<p>請輸入一筆新的支出備註 :</p>" +
-                    "<form action='/save' method='POST'>" +
-                    "<input type='text' name='note' style='width: 300px;'>" +
-                    "<input type='submit' value='7'>" +
-                    "</form>" +
-                    "</body></html>";
-
+            String html = "<html><body style='font-family:sans-serif; padding:20px;'>" +
+                          "<h2>資管期末專案：安全記帳系統</h2>" +
+                          "<form action='/save' method='POST'>" +
+                          "支出備註: <input type='text' name='note'> " +
+                          "<input type='submit' value='儲存'>" +
+                          "</form></body></html>";
             sendResponse(exchange, html);
         });
 
         server.createContext("/save", (exchange) -> {
-            String userInput = "";
-
             if ("POST".equals(exchange.getRequestMethod())) {
-                InputStreamReader isr =
-                        new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8);
+                InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8);
                 BufferedReader br = new BufferedReader(isr);
-                String formData = br.readLine(); // note=xxx
-                if (formData != null && formData.split("=").length > 1) {
-                    userInput = java.net.URLDecoder.decode(
-                            formData.split("=")[1],
-                            StandardCharsets.UTF_8
-                    );
+                String formData = br.readLine();
+                String userInput = formData.split("=").length > 1 ? formData.split("=")[1] : "";
+                userInput = java.net.URLDecoder.decode(userInput, StandardCharsets.UTF_8);
+
+                String safeInput = userInput.replace("<", "&lt;").replace(">", "&gt;");
+
+                String statusMessage = "";
+                try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {
+                    String sql = "INSERT INTO notes (note_content) VALUES (?)";
+                    PreparedStatement pstmt = conn.prepareStatement(sql);
+                    pstmt.setString(1, safeInput);
+                    pstmt.executeUpdate();
+                    statusMessage = "資料已成功安全地存入資料庫！";
+                } catch (Exception e) {
+                    statusMessage = "儲存發生錯誤: " + e.getMessage();
                 }
+
+                String html = "<html><body><h3>" + statusMessage + "</h3>" +
+                              "<p>存入內容: " + safeInput + "</p>" +
+                              "<a href='/'>返回首頁</a></body></html>";
+                sendResponse(exchange, html);
             }
-
-            String safeInput = userInput.replace("<", "&lt;").replace(">", "&gt;");
-
-            String html =
-                    "<html><body>" +
-                    "<h3>儲存成功 !</h3>" +
-                    "<p>你輸入的內容(已通過安全過濾): <b>" + safeInput + "</b></p>" +
-                    "<a href='/'>返回</a>" +
-                    "</body></html>";
-
-            sendResponse(exchange, html);
         });
 
-        System.out.println("Java 安全伺服器已啟動, 監聽埠號:8080");
+        System.out.println("伺服器已啟動於 http://localhost:8081");
         server.start();
     }
 
